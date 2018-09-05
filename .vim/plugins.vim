@@ -9,6 +9,7 @@ Plugin 'editorconfig/editorconfig-vim'
 Plugin 'elzr/vim-json'
 Plugin 'valloric/youcompleteme'
 Plugin 'altercation/vim-colors-solarized'
+Plugin 'GutenYe/json5.vim'
 
 call vundle#end()
 

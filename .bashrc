@@ -38,9 +38,9 @@ if [ -f /etc/bashrc ]; then
 	. /etc/bashrc
 fi
 
-# Source connection variables
-if [ -f ~/.bashrc_connections ]; then
-  . ~/.bashrc_connections
+# Source external .bashrc
+if [ -f ~/.bashrc_external ]; then
+  . ~/.bashrc_external
 fi
 
 # Start SSH agent
@@ -61,6 +61,3 @@ export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
 
 # Change color of current terminal
 export TERM=xterm-256color
-
-# Start tmate
-[ -z "$TMUX"  ] && { tmate attach || exec tmate new-session && exit;}

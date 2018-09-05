@@ -1,0 +1,19 @@
+[pull]
+	rebase = true
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+	lg = log --all --decorate --oneline --graph
+	lc = log --decorate --oneline origin/master..
+	last = !git lg -1
+	rlg = reflog
+	la = config --get-regexp alias
+	rp = remote prune origin
+[color]
+	ui = auto
+[push]
+	default = simple
+[core]
+	editor = /usr/local/vim/bin/vim
