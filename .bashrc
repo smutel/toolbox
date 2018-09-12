@@ -43,6 +43,11 @@ if [ -f ~/.bashrc_external ]; then
   . ~/.bashrc_external
 fi
 
+# Source bash completion
+for i in ~/.bash_completion.d/*; do
+  . $i
+done
+
 # Start SSH agent
 if [ -f "${SSH_ENV}" ]; then
   run_ssh_env
