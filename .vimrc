@@ -1,3 +1,6 @@
+" Enable filetype plugin
+filetype plugin on
+
 " Load plugins configuration
 if filereadable(expand("~/.vim/plugins.vim"))
   source ~/.vim/plugins.vim
@@ -9,6 +12,10 @@ endif
 
 if filereadable(expand("~/.vim/NERDTree.vim"))
   source ~/.vim/NERDTree.vim
+endif
+
+if filereadable(expand("~/.vim/NERDCommenter.vim"))
+  source ~/.vim/NERDCommenter.vim
 endif
 
 " Set no compatible with vi
@@ -54,3 +61,9 @@ set ruler
 
 " Set indentation
 set cindent
+
+" Shortcut to save and quit buffer
+nnoremap qq :w\|bd<cr>
+
+" Remap leader key
+let mapleader = "_"

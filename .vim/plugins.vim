@@ -10,6 +10,7 @@ Plugin 'elzr/vim-json'
 Plugin 'valloric/youcompleteme'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'GutenYe/json5.vim'
+Plugin 'scrooloose/nerdcommenter'
 
 call vundle#end()
 
