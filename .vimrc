@@ -66,4 +66,4 @@ set cindent
 nnoremap qq :w\|bd<cr>
 
 " Remap leader key
-let mapleader = "_"
+let mapleader = ","
