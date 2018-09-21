@@ -13,5 +13,3 @@ Plugin 'GutenYe/json5.vim'
 Plugin 'scrooloose/nerdcommenter'
 
 call vundle#end()
-
-filetype plugin indent on

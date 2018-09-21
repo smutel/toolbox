@@ -1,6 +1,3 @@
-" Enable filetype plugin
-filetype plugin on
-
 " Load plugins configuration
 if filereadable(expand("~/.vim/plugins.vim"))
   source ~/.vim/plugins.vim
@@ -17,6 +14,11 @@ endif
 if filereadable(expand("~/.vim/NERDCommenter.vim"))
   source ~/.vim/NERDCommenter.vim
 endif
+
+" Enable filetype plugin
+filetype on
+filetype plugin on
+filetype indent on
 
 " Set no compatible with vi
 set nocompatible
