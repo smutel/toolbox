@@ -3,8 +3,8 @@ if filereadable(expand("~/.vim/plugins.vim"))
   source ~/.vim/plugins.vim
 endif
 
-if filereadable(expand("~/.vim/lightline.vim"))
-  source ~/.vim/lightline.vim
+if filereadable(expand("~/.vim/vim-airline.vim"))
+  source ~/.vim/vim-airline.vim
 endif
 
 if filereadable(expand("~/.vim/NERDTree.vim"))
