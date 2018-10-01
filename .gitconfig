@@ -14,6 +14,6 @@
 [color]
 	ui = auto
 [push]
-	default = simple
+	default = current
 [core]
 	editor = /usr/local/vim/bin/vim
