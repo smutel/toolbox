@@ -71,6 +71,11 @@ main() {
     exit 1
   fi
 
+  if ! which jq > /dev/null; then
+    echo "jq binary should be installed"
+    exit 1
+  fi
+
   opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
     --name "$(basename "$0")" \
