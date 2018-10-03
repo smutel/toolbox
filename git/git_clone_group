@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Set proxy
+source /usr/local/bin/set_proxy.sh
+
+GIT_URL="https://git.xit.rxcorp.com"
+GIT_SSH="git@git.xit.rxcorp.com"
+
+GIT_URL="${GIT_URL}/api/v4"
+PREFIX="ssh_url_to_repo"
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "This script requires the 'jq' json parser (https://stedolan.github.io/jq/)."
+  exit 1
+fi
+
+if [ -z "$1" ]
+then
+  echo "Group name is required (arg 1)"
+  exit 1
+fi
+
+if [ -z "$GIT_TOKEN" ];
+then
+  echo "Env variable GIT_TOKEN not defined"
+  exit 1
+fi
+
+echo "Cloning all git projects in group $1 ..."
+GROUP_ID=$(curl -s --header "PRIVATE-TOKEN: $GIT_TOKEN" $GIT_URL/groups?search=$1 | jq '.[].id')
+echo "Group found, id is $GROUP_ID ...";
+curl -s --header "PRIVATE-TOKEN: $GIT_TOKEN" $GIT_URL/groups/$GROUP_ID/projects?per_page=100 | jq --arg p "$PREFIX" '.[] | .[$p]' | xargs -L1 git clone -q
