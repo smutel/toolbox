@@ -1,0 +1,8 @@
+*~
+*.swp
+*.swo
+*.tmp
+*.retry
+.terraform
+*.plan
+*.tfstate*
