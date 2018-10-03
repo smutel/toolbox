@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -euo pipefail
+
+clean_unused_volumes() {
+  local volumes_to_delete=$(aws ec2 describe-volumes --filters 'Name=status,Values=available' --query 'Volumes[*].{VolumeId:VolumeId}' | jq .[].VolumeId | xargs)
+  volumes_count=$(echo ${volumes_to_delete} | wc -w)
+  echo "${volumes_count} volumes to remove"
+  for volume in ${volumes_to_delete}; do
+    echo "Deleting volumes ${volume} ..."
+    aws ec2 delete-volume --volume-id ${volume}
+  done
+}
+
+main() {
+  if ! which aws > /dev/null; then
+    echo "aws binary should be installed"
+    exit 1
+  fi
+
+  if ! which jq > /dev/null; then
+    echo "jq binary should be installed"
+    exit 1
+  fi
+
+  clean_unused_volumes
+}
+main $@
