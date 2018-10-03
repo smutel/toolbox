@@ -1,0 +1,116 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ARGUMENT_LIST=(
+  "target"
+  "folder"
+)
+
+TARGET_LIST=(
+  "vsphere"
+  "aws"
+)
+
+clean_image_aws() {
+  local folder=$1
+  local tag="Folder"
+
+  local amis_to_remove=$(aws ec2 describe-images --owners self --filters "Name=tag:${tag},Values=${folder}" --query 'Images[*].{ID:ImageId}' | jq .[].ID | xargs)
+  local amis_count=$(echo ${amis_to_remove} | wc -w)
+  echo "${amis_count} amis found to remove"
+  for ami in ${amis_to_remove}; do
+    echo "Deregistering ami ${ami} ..."
+    aws ec2 deregister-image --image-id ${ami}
+  done
+
+  local snapshots_to_remove=$(aws ec2 describe-snapshots --filters "Name=tag:${tag},Values=${folder}" --query 'Snapshots[*].{SnapshotId:SnapshotId}' | jq .[].SnapshotId | xargs)
+  local snapshots_count=$(echo ${snapshots_to_remove} | wc -w)
+  echo "${snapshots_count} snapshots found to remove"
+  for snapshot in ${snapshots_to_remove}; do
+    echo "Deleting snapshot ${snapshot} ..."
+    aws ec2 delete-snapshot --snapshot-id ${snapshot}
+  done
+}
+
+clean_image_vsphere() {
+  local folder=$1
+
+  local templates_to_remove="$(govc find --type m | grep "/${folder}/" | xargs)"
+  local templates_count=$(echo ${templates_to_remove} | wc -w)
+  echo "${templates_count} templates found to remove"
+  for template in ${templates_to_remove}; do
+    local template_name=${template##*/}
+    echo "Deleting template ${template_name} ..."
+    govc vm.destroy ${template_name}
+  done
+}
+
+usage() {
+  local target_count=${#TARGET_LIST[*]}
+
+  echo -n "Usage: clean_images [--target <"
+  for (( i=0; i < $target_count; i++ )); do
+    echo -n "${TARGET_LIST[$i]}"
+    if [[ $i -ne $((target_count - 1)) ]]; then
+      echo -n "|"
+    fi
+  done
+  echo ">] --folder <folder_name>"
+  exit 1
+}
+
+main() {
+  if ! which aws > /dev/null; then
+    echo "aws binary should be installed"
+    exit 1
+  fi
+
+  if ! which govc > /dev/null; then
+    echo "govc binary should be installed"
+    exit 1
+  fi
+
+  opts=$(getopt \
+    --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
+    --name "$(basename "$0")" \
+    --options "" \
+    -- "$@"
+  )
+
+  eval set --$opts
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --target)
+          target=$2
+          shift 2
+          ;;
+      --folder)
+          folder=$2
+          shift 2
+          ;;
+      *)
+          break
+          ;;
+    esac
+  done
+
+  if [[ -z "${folder:-}" ]]; then
+    usage
+  fi
+
+  if [[ -n "${target:-}" ]]; then
+    if declare -f clean_image_${target} > /dev/null; then
+      clean_image_${target} ${folder}
+    else
+      echo "No function defined to remove images on ${target}"
+      exit 1
+    fi
+  else
+    for target in ${TARGET_LIST[@]}; do
+      clean_image_${target} ${folder}
+    done
+  fi
+}
+main $@
