@@ -36,7 +36,7 @@ clean_image_aws() {
 clean_image_vsphere() {
   local folder=$1
 
-  local templates_to_remove="$(govc find --type m | grep "/${folder}/" | xargs)"
+  local templates_to_remove="$(govc find --type m | grep "/${folder}/" | xargs || true)"
   local templates_count=$(echo ${templates_to_remove} | wc -w)
   echo "${templates_count} templates found to remove"
   for template in ${templates_to_remove}; do
