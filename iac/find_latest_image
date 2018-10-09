@@ -1,0 +1,245 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ARGUMENT_LIST=(
+  "image-name"
+  "target"
+  "folder"
+  "branch"
+)
+
+TARGET_LIST=(
+  "vsphere"
+  "aws"
+)
+
+return_max_version() {
+  local version=$1
+  local max_version=$2
+  local branch=$3
+
+  if [[ ${branch} =~ ^[0-9]+\.[0-9]+$ && ! ${version} =~ ^[0-9]+\.[0-9]+$ ]]; then
+    echo ${max_version}
+    return
+  fi
+
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && ${version} =~ ^[0-9]+\.[0-9]+$ ]]; then
+    echo ${max_version}
+    return
+  fi
+
+  if [[ "${max_version}" == "0" ]]; then
+    echo ${version}
+    return
+  elif [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
+    if [[ $version -gt ${max_version} ]]; then
+      echo  ${version}
+      return
+    else
+      echo ${max_version}
+      return
+    fi
+  else
+    local version_major=$(echo "${version}" | cut -d"." -f1)
+    local version_minor=$(echo "${version}" | cut -d"." -f2)
+    local max_version_major=$(echo "${max_version}" | cut -d"." -f1)
+    local max_version_minor=$(echo "${max_version}" | cut -d"." -f2)
+
+    if [[ "${version_major}" -gt "${max_version_major}" ]]; then
+      echo ${version}
+      return
+    elif [[ "${version_major}" -lt "${max_version_major}" ]]; then
+      echo ${max_version}
+      return
+    else
+      if [[ "${version_minor}" -gt "${max_version_minor}" ]]; then
+        echo ${version}
+        return
+      elif [[ "${version_minor}" -lt "${max_version_minor}" ]]; then
+        echo ${max_version}
+        return
+      else
+        echo ${version}
+        return
+      fi
+    fi
+  fi
+}
+
+find_latest_image_aws() {
+  local image_name=$1
+  local folder=$2
+  local branch=$3
+  local tag="Folder"
+
+  local ami_name
+  local filters
+
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
+    ami_name=${image_name}-${branch}
+  else
+    ami_name=${image_name}
+  fi
+
+  if [[ "${folder}" == "none" ]]; then
+    filters="Name=tag:Name,Values=${ami_name}*"
+  else
+    filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*"
+  fi
+  local amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
+
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "$amis_name" ]]; then
+    ami_name=${image_name}-master
+
+    if [[ "${folder}" == "none" ]]; then
+      filters="Name=tag:Name,Values=${ami_name}*"
+    else
+      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}"
+    fi
+    amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
+  fi
+
+  local max_version=0
+  for i in ${amis_name}; do
+    local version=${i##*-}
+    max_version=$(return_max_version ${version} ${max_version} ${branch})
+  done
+
+  if [[ "${max_version}" != "0" ]]; then
+    if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
+      echo ${ami_name}-${max_version}
+    else
+      echo ${image_name}-${max_version}
+    fi
+  fi
+}
+
+find_latest_image_vsphere() {
+  local image_name=$1
+  local folder=$2
+  local branch=$3
+
+  local template_name
+  local templates=""
+
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
+    template_name=${image_name}-${branch}
+  else
+    template_name=${image_name}
+  fi
+
+  if [[ "${folder}" == "none" ]]; then
+    templates="$(govc find --type m | grep "/${template_name}" | xargs || true)"
+  else
+    templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}" | xargs || true)"
+  fi
+
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "${templates}" ]]; then
+    template_name=${image_name}-master
+
+    if [[ "${folder}" == "none" ]]; then
+      templates="$(govc find --type m | grep "/${template_name}" | xargs || true)"
+    else
+      templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}" | xargs || true)"
+    fi
+  fi
+
+  local max_version=0
+  for i in ${templates}; do
+    local version=${i##*-}
+    max_version=$(return_max_version ${version} ${max_version} ${branch})
+  done
+
+  if [[ "${max_version}" != "0" ]]; then
+    if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
+      echo ${template_name}-${max_version}
+    else
+      echo ${image_name}-${max_version}
+    fi
+  fi
+}
+
+usage() {
+  local target_count=${#TARGET_LIST[*]}
+
+  echo -n "Usage: find_latest_image --image-name <image_name> --target <"
+  for (( i=0; i < $target_count; i++ )); do
+    echo -n "${TARGET_LIST[$i]}"
+    if [[ $i -ne $((target_count - 1)) ]]; then
+      echo -n "|"
+    fi
+  done
+  echo "> [--folder <folder_name>] [--branch <branch_name>]"
+  exit 1
+}
+
+main() {
+  if ! which aws > /dev/null; then
+    echo "aws binary should be installed"
+    exit 1
+  fi
+
+  if ! which govc > /dev/null; then
+    echo "govc binary should be installed"
+    exit 1
+  fi
+
+  if ! which jq > /dev/null; then
+    echo "jq binary should be installed"
+    exit 1
+  fi
+
+  opts=$(getopt \
+    --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
+    --name "$(basename "$0")" \
+    --options "" \
+    -- "$@"
+  )
+
+  eval set --$opts
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --image-name)
+          image_name=$2
+          shift 2
+          ;;
+      --target)
+          target=$2
+          shift 2
+          ;;
+      --folder)
+          folder=$2
+          shift 2
+          ;;
+      --branch)
+          branch=$2
+          shift 2
+          ;;
+      *)
+          break
+          ;;
+    esac
+  done
+
+  if [[ -z "${target:-}" || -z "${image_name}" ]]; then
+    usage
+  fi
+
+  if [[ -z "${folder:-}" ]]; then
+    folder="none"
+  fi
+
+  if [[ -z "${branch:-}" ]]; then
+    branch="master"
+  fi
+
+  if declare -f find_latest_image_${target} > /dev/null; then
+    find_latest_image_${target} ${image_name} ${folder} ${branch}
+  else
+    echo "No function defined to remove images on ${target}"
+    exit 1
+  fi
+}
+main $@
