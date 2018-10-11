@@ -73,8 +73,8 @@ find_latest_image_aws() {
   local branch=$3
   local tag="Folder"
 
-  local ami_name
-  local filters
+  local ami_name=""
+  local filters=""
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
     ami_name=${image_name}-${branch}
@@ -83,19 +83,19 @@ find_latest_image_aws() {
   fi
 
   if [[ "${folder}" == "none" ]]; then
-    filters="Name=tag:Name,Values=${ami_name}*"
+    filters="Name=tag:Name,Values=${ami_name}*-"
   else
-    filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*"
+    filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*-"
   fi
   local amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
 
-  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "$amis_name" ]]; then
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "$amis_name" && "${branch}" != "master" ]]; then
     ami_name=${image_name}-master
 
     if [[ "${folder}" == "none" ]]; then
-      filters="Name=tag:Name,Values=${ami_name}*"
+      filters="Name=tag:Name,Values=${ami_name}*-"
     else
-      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}"
+      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*-"
     fi
     amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
   fi
@@ -120,7 +120,7 @@ find_latest_image_vsphere() {
   local folder=$2
   local branch=$3
 
-  local template_name
+  local template_name=""
   local templates=""
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
@@ -130,18 +130,18 @@ find_latest_image_vsphere() {
   fi
 
   if [[ "${folder}" == "none" ]]; then
-    templates="$(govc find --type m | grep "/${template_name}" | xargs || true)"
+    templates="$(govc find --type m | grep "/${template_name}-" | xargs || true)"
   else
-    templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}" | xargs || true)"
+    templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
   fi
 
-  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "${templates}" ]]; then
+  if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "${templates}" && "${branch}" != "master" ]]; then
     template_name=${image_name}-master
 
     if [[ "${folder}" == "none" ]]; then
-      templates="$(govc find --type m | grep "/${template_name}" | xargs || true)"
+      templates="$(govc find --type m | grep "/${template_name}-" | xargs || true)"
     else
-      templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}" | xargs || true)"
+      templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
     fi
   fi
 
@@ -188,6 +188,11 @@ main() {
   if ! which jq > /dev/null; then
     echo "jq binary should be installed"
     exit 1
+  fi
+
+  if [[ -n "${VSPHERE_USER}" && -n "${VSPHERE_PASSWORD}" && -n "${VSPHERE_SERVER}" ]]; then
+    export GOVC_URL="https://${VSPHERE_USER}:${VSPHERE_PASSWORD}@${VSPHERE_SERVER}/sdk"
+    export GOVC_INSECURE=1
   fi
 
   opts=$(getopt \
