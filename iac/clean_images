@@ -5,12 +5,17 @@ set -euo pipefail
 ARGUMENT_LIST=(
   "target"
   "folder"
+  "grep"
+  "igrep"
 )
 
 TARGET_LIST=(
   "vsphere"
   "aws"
 )
+
+grep=""
+igrep=""
 
 clean_image_aws() {
   local folder=$1
@@ -20,16 +25,72 @@ clean_image_aws() {
   local amis_count=$(echo ${amis_to_remove} | wc -w)
   echo "${amis_count} amis found to remove"
   for ami in ${amis_to_remove}; do
-    echo "Deregistering ami ${ami} ..."
-    aws ec2 deregister-image --image-id ${ami}
+    local remove=0
+    if [[ -n "${grep}" ]]; then
+      if [[ -n "${igrep}" ]]; then
+        if echo "${ami}" | grep "${grep}" && ! echo "${ami}" | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if echo "${ami}" | grep "${grep}"; then
+          remove=1
+        fi
+      fi
+    elif [[ -n "${igrep}" ]]; then
+      if [[ -n "${grep}" ]]; then
+        if echo "${ami}" | grep "${grep}" && ! echo "${ami}" | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if ! echo "${ami}" | grep "${igrep}"; then
+          remove=1
+        fi
+      fi
+    else
+      echo "Deregistering ami ${ami} ..."
+      aws ec2 deregister-image --image-id "${ami}"
+    fi
+
+    if [[ ${remove} -eq 1 ]]; then
+      echo "Deregistering ami ${ami} ..."
+      aws ec2 deregister-image --image-id "${ami}"
+    fi
   done
 
   local snapshots_to_remove=$(aws ec2 describe-snapshots --filters "Name=tag:${tag},Values=${folder}" --query 'Snapshots[*].{SnapshotId:SnapshotId}' | jq .[].SnapshotId | xargs)
   local snapshots_count=$(echo ${snapshots_to_remove} | wc -w)
   echo "${snapshots_count} snapshots found to remove"
   for snapshot in ${snapshots_to_remove}; do
-    echo "Deleting snapshot ${snapshot} ..."
-    aws ec2 delete-snapshot --snapshot-id ${snapshot}
+    remove=0
+    if [[ -n "${grep}" ]]; then
+      if [[ -n "${igrep}" ]]; then
+        if echo "${snapshot}" | grep "${grep}" && ! echo "${snapshot}" | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if echo "${snapshot}" | grep "${grep}"; then
+          remove=1
+        fi
+      fi
+    elif [[ -n "${igrep}" ]]; then
+      if [[ -n "${grep}" ]]; then
+        if echo "${snapshot}" | grep "${grep}" && ! echo "${snapshot}" | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if ! echo "${snapshot}" | grep "${igrep}"; then
+          remove=1
+        fi
+      fi
+    else
+      echo "Deleting snapshot ${snapshot} ..."
+      aws ec2 delete-snapshot --snapshot-id "${snapshot}"
+    fi
+
+    if [[ ${remove} -eq 1 ]]; then
+      echo "Deleting snapshot ${snapshot} ..."
+      aws ec2 delete-snapshot --snapshot-id "${snapshot}"
+    fi
   done
 }
 
@@ -41,8 +102,37 @@ clean_image_vsphere() {
   echo "${templates_count} templates found to remove"
   for template in ${templates_to_remove}; do
     local template_name=${template##*/}
-    echo "Deleting template ${template_name} ..."
-    govc vm.destroy ${template_name}
+
+    local remove=0
+    if [[ -n "${grep}" ]]; then
+      if [[ -n "${igrep}" ]]; then
+        if echo ${template_name} | grep "${grep}" && ! echo ${template_name} | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if echo ${template_name} | grep "${grep}"; then
+          remove=1
+        fi
+      fi
+    elif [[ -n "${igrep}" ]]; then
+      if [[ -n "${grep}" ]]; then
+        if echo ${template_name} | grep "${grep}" && ! echo ${template_name} | grep "${igrep}"; then
+          remove=1
+        fi
+      else
+        if ! echo ${template_name} | grep "${igrep}"; then
+          remove=1
+        fi
+      fi
+    else
+      echo "Deleting template ${template_name} ..."
+      govc vm.destroy ${template_name}
+    fi
+
+    if [[ ${remove} -eq 1 ]]; then
+      echo "Deleting template ${template_name} ..."
+      govc vm.destroy ${template_name}
+    fi
   done
 }
 
@@ -56,28 +146,50 @@ usage() {
       echo -n "|"
     fi
   done
-  echo ">] --folder <folder_name>"
-  exit 1
+  echo ">] [--grep <string>] [--igrep <string>] --folder <folder_name>"
+}
+
+help() {
+  local target_count=${#TARGET_LIST[*]}
+
+  usage
+  echo ""
+  echo "Arguments :"
+  echo "--target"
+  echo -n "    specify where you would like to remove images ("
+  for (( i=0; i < $target_count; i++ )); do
+    echo -n "${TARGET_LIST[$i]}"
+    if [[ $i -ne $((target_count - 1)) ]]; then
+      echo -n ", "
+    fi
+  done
+  echo ")"
+  echo "--grep"
+  echo "    remove only image with name containing this string"
+  echo "--igrep"
+  echo "    remove all images except those containing this string"
+  echo "--folder"
+  echo "    specify in which folder you would like to remove images"
 }
 
 main() {
-  if ! which aws > /dev/null; then
-    echo "aws binary should be installed"
-    exit 1
-  fi
+  # if ! which aws > /dev/null; then
+    # echo "aws binary should be installed"
+    # exit 1
+  # fi
 
-  if ! which govc > /dev/null; then
-    echo "govc binary should be installed"
-    exit 1
-  fi
+  # if ! which govc > /dev/null; then
+    # echo "govc binary should be installed"
+    # exit 1
+  # fi
 
-  if ! which jq > /dev/null; then
-    echo "jq binary should be installed"
-    exit 1
-  fi
+  # if ! which jq > /dev/null; then
+    # echo "jq binary should be installed"
+    # exit 1
+  # fi
 
   opts=$(getopt \
-    --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}")" \
+    --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}"),help" \
     --name "$(basename "$0")" \
     --options "" \
     -- "$@"
@@ -95,6 +207,18 @@ main() {
           folder=$2
           shift 2
           ;;
+      --grep)
+          grep=$2
+          shift 2
+          ;;
+      --igrep)
+          igrep=$2
+          shift 2
+          ;;
+      --help)
+          help
+          exit 1
+          ;;
       *)
           break
           ;;
@@ -103,6 +227,7 @@ main() {
 
   if [[ -z "${folder:-}" ]]; then
     usage
+    exit 1
   fi
 
   if [[ -n "${target:-}" ]]; then
