@@ -13,6 +13,11 @@ if [[ -z "${git_email}" ]]; then
   exit 1
 fi
 
+eval $(grep "^ID=" /etc/os-release)
+if [[ "$ID" -eq "ubuntu" ]]; then
+  sudo apt install build-essential cmake python3-dev
+fi
+
 echo "Load bashrc external ..."
 if [[ ! -f ~/.bashrc_external ]]; then
   echo "Unable to load ~/.bashrc_external. Skipping."
@@ -33,7 +38,7 @@ echo "Restoring config ..."
 find . -maxdepth 1 ! -path "." ! -path "./.git" -name ".*" -exec cp -rf {} ~ \;
 
 echo "Set user in gitconfig ..."
-git config --global user.name ${git_username}}
+git config --global user.name ${git_username}
 git config --global user.email ${git_email}
 
 # Temporary vi alias
@@ -47,7 +52,7 @@ else
   echo "Update personnal config repository ..."
   git -C ~/.vim/bundle/Vundle.vim pull
 fi
-vim -s -i NONE -c VundleUpdate -c quitall
+vim -i NONE -c VundleUpdate -c quitall
 
 echo "Installing additional stuf for youcompleteme ..."
 cd ~/.vim/bundle/youcompleteme/
