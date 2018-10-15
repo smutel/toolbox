@@ -1,32 +1,76 @@
 #!/bin/bash
 
-# Set proxy
-source /usr/local/bin/set_proxy.sh
+find_groups_id() {
+  local group_name=$1
+  local tmp_file=/tmp/${group_name}_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1).json
+  local groups_id=""
+  local i
 
-GIT_URL="https://git.xit.rxcorp.com"
-GIT_SSH="git@git.xit.rxcorp.com"
+  curl -s --header "PRIVATE-TOKEN: ${GIT_TOKEN}" ${GIT_URL}/api/v4/groups?search=${group_name} -o ${tmp_file}
 
-GIT_URL="${GIT_URL}/api/v4"
-PREFIX="ssh_url_to_repo"
+  local group_count=$(cat ${tmp_file} | jq length)
+  for ((i = 0; i < ${group_count};i++)) {
+    local group_name_found=$(cat ${tmp_file} | jq .[${i}].name | xargs)
+    local group_id_found=$(cat ${tmp_file} | jq .[${i}].id | xargs)
+    if [[ "${group_name_found}" == "${group_name}" ]]; then
+      groups_id="${groups_id} ${group_id_found}"
+    fi
+  }
 
-if ! command -v jq >/dev/null 2>&1; then
-  echo "This script requires the 'jq' json parser (https://stedolan.github.io/jq/)."
-  exit 1
-fi
+  rm ${tmp_file}
+  echo ${groups_id}
+}
 
-if [ -z "$1" ]
-then
-  echo "Group name is required (arg 1)"
-  exit 1
-fi
+clone_group() {
+  local group_id=$1
+  local tmp_file=/tmp/${group_id}_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1).json
+  local i
 
-if [ -z "$GIT_TOKEN" ];
-then
-  echo "Env variable GIT_TOKEN not defined"
-  exit 1
-fi
+  curl -s --header "PRIVATE-TOKEN: ${GIT_TOKEN}" ${GIT_URL}/api/v4/groups/${group_id}/projects -o ${tmp_file}
 
-echo "Cloning all git projects in group $1 ..."
-GROUP_ID=$(curl -s --header "PRIVATE-TOKEN: $GIT_TOKEN" $GIT_URL/groups?search=$1 | jq '.[].id')
-echo "Group found, id is $GROUP_ID ...";
-curl -s --header "PRIVATE-TOKEN: $GIT_TOKEN" $GIT_URL/groups/$GROUP_ID/projects?per_page=100 | jq --arg p "$PREFIX" '.[] | .[$p]' | xargs -L1 git clone -q
+  local project_count=$(cat ${tmp_file} | jq length)
+  for ((i = 0; i < ${project_count};i++)) {
+    local project_name=$(cat ${tmp_file} | jq .[${i}].name | xargs)
+    local project_ssh_url=$(cat ${tmp_file} | jq .[${i}].ssh_url_to_repo | xargs)
+    echo "Cloning project ${project_name} ..."
+    git clone -q ${project_ssh_url} > /dev/null 2>&1
+  }
+
+  rm ${tmp_file}
+}
+
+usage() {
+  echo "Usage: git_clone_group <group_name>"
+}
+
+main() {
+  if ! which jq > /dev/null; then
+    echo "jq binary should be installed"
+    exit 1
+  fi
+
+  if [[ -z "${GIT_URL}" ]]; then
+    echo "Env variable GIT_URL not defined"
+    exit 1
+  fi
+
+  if [[ -z "${GIT_TOKEN}" ]]; then
+    echo "Env variable GIT_TOKEN not defined"
+    exit 1
+  fi
+
+  if [[ -z "$1" ]]; then
+    usage
+    exit 1
+  fi
+
+  echo "Finding groups id with name $1..."
+  groups_id=$(find_groups_id $1)
+
+  echo "Groups id found with name $1: ${groups_id}"
+
+  for group in "${groups_id}"; do
+    clone_group $group
+  done
+}
+main $@
