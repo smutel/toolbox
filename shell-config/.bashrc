@@ -10,23 +10,34 @@ SSH_ENV="$HOME/.ssh/environment"
 #     FUNCTIONS    #
 ####################
 
-function run_ssh_env {
+load_sshagent_env() {
   . "${SSH_ENV}" > /dev/null
 }
 
-function start_ssh_agent {
+start_ssh_agent() {
   echo "Initializing new SSH agent..."
   ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
   echo "succeeded"
   chmod 600 "${SSH_ENV}"
-
-  run_ssh_env
-  ssh-add ~/.ssh/id_dsa
-  ssh-add ~/.ssh/id_rsa
+  load_sshagent_env
 }
 
-function parse_git_branch {
-     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+add_ssh_keys() {
+  if ! ssh-add -l | grep ${HOME}/.ssh/id_dsa > /dev/null; then
+    if [[ -f ~/.ssh/id_dsa ]]; then
+      ssh-add ~/.ssh/id_dsa
+    fi
+  fi
+
+  if ! ssh-add -l | grep ${HOME}/.ssh/id_rsa > /dev/null ; then
+    if [[ -f ~/.ssh/id_rsa ]]; then
+      ssh-add ~/.ssh/id_rsa
+    fi
+  fi
+}
+
+parse_git_branch() {
+  git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
 }
 
 ####################
@@ -50,13 +61,14 @@ done
 
 # Start SSH agent
 if [ -f "${SSH_ENV}" ]; then
-  run_ssh_env
+  load_sshagent_env
   ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
     start_ssh_agent
   }
 else
   start_ssh_agent
 fi
+add_ssh_keys
 
 # Create some alias
 alias vi='vim'
