@@ -26,8 +26,8 @@ clean_image_aws() {
   local amis_to_remove=""
   local snapshots_to_remove=""
   for ((i=0;i < ${amis_count};i++)) {
-    local ami_id=$(echo ${amis} | jq .[$i].ImageId)
-    local ami_name=$(echo ${amis} | jq .[$i].Name)
+    local ami_id=$(echo ${amis} | jq .[$i].ImageId | xargs)
+    local ami_name=$(echo ${amis} | jq .[$i].Name | xargs)
     local ami_snapshot=$(echo ${amis} | jq -r .[$i].SnapshotId[] | xargs)
     if [[ -n "${grep}" ]]; then
       if [[ -n "${igrep}" ]]; then
@@ -65,8 +65,10 @@ clean_image_aws() {
     aws ec2 deregister-image --image-id "${ami}"
   done
 
-  echo "Waiting a little bit before removing the snapshots"
-  sleep 10
+  if [[ $(echo ${amis_to_remove} | wc -w) != 0 ]]; then
+    echo "Waiting a little bit before removing the snapshots"
+    sleep 10
+  fi
 
   echo "$(echo ${snapshots_to_remove} | wc -w) snapshots found to remove"
   for snapshot in ${snapshots_to_remove}; do
@@ -110,7 +112,7 @@ clean_image_vsphere() {
   echo "$(echo ${templates_to_remove} | wc -w) templates found to remove"
   for template in ${templates_to_remove}; do
     echo "Removing template ${template} ..."
-    go.vc destroy ${template}
+    govc vm.destroy ${template}
   done
 }
 
