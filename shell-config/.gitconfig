@@ -17,4 +17,5 @@
 [push]
   default = current
 [core]
-  editor = /usr/local/vim/bin/vim
+  editor = vim
+  excludesfile = ~/.gitignore
