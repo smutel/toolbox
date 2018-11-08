@@ -130,18 +130,18 @@ find_latest_image_vsphere() {
   fi
 
   if [[ "${folder}" == "none" ]]; then
-    templates="$(govc find --type m | grep "/${template_name}-" | xargs || true)"
+    templates="$(govc find . -type m -config.template true | grep "/${template_name}-" | xargs || true)"
   else
-    templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
+    templates="$(govc find . -type m -config.template true | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
   fi
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "${templates}" && "${branch}" != "master" ]]; then
     template_name=${image_name}-master
 
     if [[ "${folder}" == "none" ]]; then
-      templates="$(govc find --type m | grep "/${template_name}-" | xargs || true)"
+      templates="$(govc find . -type m -config.template true | grep "/${template_name}-" | xargs || true)"
     else
-      templates="$(govc find --type m | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
+      templates="$(govc find . -type m -config.template true | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
     fi
   fi
 
@@ -243,7 +243,7 @@ main() {
   if declare -f find_latest_image_${target} > /dev/null; then
     find_latest_image_${target} ${image_name} ${folder} ${branch}
   else
-    echo "No function defined to remove images on ${target}"
+    echo "No function defined to find latest images on target ${target}"
     exit 1
   fi
 }
