@@ -36,6 +36,7 @@ fi
 
 echo "Restoring config ..."
 find . -maxdepth 1 ! -path "." ! -path "./.git" -name ".*" -exec cp -rf {} ~ \;
+cat ~/.bashrc_custom >> ~/.bashrc
 
 echo "Set user in gitconfig ..."
 git config --global user.name ${git_username}
