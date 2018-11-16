@@ -14,7 +14,7 @@ if [[ -z "${git_email}" ]]; then
 fi
 
 eval $(grep "^ID=" /etc/os-release)
-if [[ "$ID" -eq "ubuntu" ]]; then
+if [[ "$ID" == "ubuntu" ]]; then
   sudo apt install build-essential cmake python3-dev
 fi
 
