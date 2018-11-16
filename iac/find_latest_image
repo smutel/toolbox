@@ -74,28 +74,47 @@ find_latest_image_aws() {
   local tag="Folder"
 
   local ami_name=""
+  local amis_name=""
   local filters=""
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ ]]; then
     ami_name=${image_name}-${branch}
+
+    if [[ "${folder}" == "none" ]]; then
+      filters="Name=tag:Name,Values=${ami_name}-*"
+    else
+      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}-*"
+    fi
+    amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
+
+    if [[ -z "$amis_name" ]]; then
+      ami_name=$(echo ${ami_name} | tr '[A-Z]' '[a-z]')
+
+      if [[ "${folder}" == "none" ]]; then
+        filters="Name=tag:Name,Values=${ami_name}-*"
+      else
+        filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}-*"
+      fi
+      amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
+    fi
   else
     ami_name=${image_name}
-  fi
 
-  if [[ "${folder}" == "none" ]]; then
-    filters="Name=tag:Name,Values=${ami_name}*-"
-  else
-    filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*-"
+    if [[ "${folder}" == "none" ]]; then
+      filters="Name=tag:Name,Values=${ami_name}-*"
+    else
+      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}-*"
+    fi
+    amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
   fi
-  local amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "$amis_name" && "${branch}" != "master" ]]; then
     ami_name=${image_name}-master
 
     if [[ "${folder}" == "none" ]]; then
-      filters="Name=tag:Name,Values=${ami_name}*-"
+      filters="Name=tag:Name,Values=${ami_name}-*"
     else
-      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}*-"
+      filters="Name=tag:${tag},Values=${folder},Name=tag:Name,Values=${ami_name}-*"
     fi
     amis_name=$(aws ec2 describe-images --owners self --filters ${filters} --query 'Images[*].{NAME:Name}' | jq .[].NAME | xargs)
   fi
@@ -130,18 +149,18 @@ find_latest_image_vsphere() {
   fi
 
   if [[ "${folder}" == "none" ]]; then
-    templates="$(govc find . -type m -config.template true | grep "/${template_name}-" | xargs || true)"
+    templates="$(govc find . -type m -runtime.powerState poweredOff -config.template true | grep -i "/${template_name}-" | xargs || true)"
   else
-    templates="$(govc find . -type m -config.template true | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
+    templates="$(govc find . -type m -runtime.powerState poweredOff -config.template true | grep  "/${folder}/" | grep -i "/${template_name}-" | xargs || true)"
   fi
 
   if [[ ! ${branch} =~ ^[0-9]+\.[0-9]+$ && -z "${templates}" && "${branch}" != "master" ]]; then
     template_name=${image_name}-master
 
     if [[ "${folder}" == "none" ]]; then
-      templates="$(govc find . -type m -config.template true | grep "/${template_name}-" | xargs || true)"
+      templates="$(govc find . -type m -runtime.powerState poweredOff -config.template true | grep "/${template_name}-" | xargs || true)"
     else
-      templates="$(govc find . -type m -config.template true | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
+      templates="$(govc find . -type m -runtime.powerState poweredOff -config.template true | grep "/${folder}/" | grep "/${template_name}-" | xargs || true)"
     fi
   fi
 
@@ -190,9 +209,13 @@ main() {
     exit 1
   fi
 
-  if [[ -n "${VSPHERE_USER}" && -n "${VSPHERE_PASSWORD}" && -n "${VSPHERE_SERVER}" ]]; then
+  if [[ -n "${VSPHERE_USER:-}" && -n "${VSPHERE_PASSWORD:-}" && -n "${VSPHERE_SERVER:-}" ]]; then
     export GOVC_URL="https://${VSPHERE_USER}:${VSPHERE_PASSWORD}@${VSPHERE_SERVER}/sdk"
     export GOVC_INSECURE=1
+  fi
+
+  if [[ -n "${AWS_REGION:-}" ]]; then
+    export AWS_DEFAULT_REGION="${AWS_REGION}"
   fi
 
   opts=$(getopt \
