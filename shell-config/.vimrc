@@ -69,3 +69,7 @@ nnoremap qq :w\|bd<cr>
 
 " Remap leader key
 let mapleader = ","
+
+" Tab navigation like Firefox.
+nnoremap <C-a> <Esc>:bprevious<CR>
+nnoremap <C-q> <Esc>:bnext<CR>
