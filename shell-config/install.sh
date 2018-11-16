@@ -36,6 +36,10 @@ fi
 
 echo "Restoring config ..."
 find . -maxdepth 1 ! -path "." ! -path "./.git" -name ".*" -exec cp -rf {} ~ \;
+if [[ ! -f ~/.bashrc.save ]]; then
+  cp ~/.bashrc ~/.bashrc.save
+fi
+cat ~/.bashrc.save > ~/.bashrc
 cat ~/.bashrc_custom >> ~/.bashrc
 
 echo "Set user in gitconfig ..."
