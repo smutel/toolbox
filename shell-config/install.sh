@@ -27,11 +27,11 @@ else
 fi
 
 echo "Install ssh keys and config ..."
-if [ ! -f ssh.tar.gz ]; then
+if [ ! -f ~/ssh.tar.gz ]; then
   echo "Bundle ssh.tar.gz not found. Skipping"
 else
   echo "Extracting ssh config ..."
-  tar -zxf ssh.tar.gz
+  tar -zxf ~/ssh.tar.gz -C ~
 fi
 
 echo "Restoring config ..."
@@ -43,8 +43,8 @@ cat ~/.bashrc.save > ~/.bashrc
 cat ~/.bashrc_custom >> ~/.bashrc
 
 echo "Set user in gitconfig ..."
-git config --global user.name ${git_username}
-git config --global user.email ${git_email}
+git config --global user.name "${git_username}"
+git config --global user.email "${git_email}"
 
 # Temporary vi alias
 alias vi='vim'
@@ -64,4 +64,4 @@ cd ~/.vim/bundle/youcompleteme/
 ./install.py --clang-completer > /dev/null
 
 echo "Cleanup ..."
-rm -f ssh.tar.gz
+rm -f ~/ssh.tar.gz
