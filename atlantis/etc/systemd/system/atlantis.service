@@ -1,0 +1,14 @@
+[Unit]
+Description=atlantis
+After=network.target auditd.service
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/sysconfig/atlantis
+ExecStart=/bin/bash -c 'PATH=/usr/local/git/bin:$PATH exec /usr/local/bin/atlantis server --allow-repo-config'
+Restart=always
+RestartSec=30
+User=atlantis
+
+[Install]
+WantedBy=multi-user.target

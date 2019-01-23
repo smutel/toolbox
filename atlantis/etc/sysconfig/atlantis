@@ -1,0 +1,5 @@
+ATLANTIS_GITLAB_HOSTNAME="git.xit.rxcorp.com"
+ATLANTIS_GITLAB_USER="atlantis"
+ATLANTIS_GITLAB_TOKEN=""
+ATLANTIS_GITLAB_WEBHOOK_SECRET=""
+ATLANTIS_REPO_WHITELIST="git.xit.rxcorp.com/IAC-CIO/core/terraform-iac-core,git.xit.rxcorp.com/IAC-CIO/core/terraform-iac-env"
