@@ -80,7 +80,7 @@ clean_image_aws() {
 clean_image_vsphere() {
   local folder=$1
 
-  local templates="$(govc find --type m | grep "/${folder}/" | xargs || true)"
+  local templates="$(govc find . -type m -runtime.powerState poweredOff -config.template true | grep "/${folder}/" | xargs || true)"
   local templates_to_remove=""
   for template in ${templates}; do
     local template_name=${template##*/}
@@ -153,20 +153,29 @@ help() {
 }
 
 main() {
-  # if ! which aws > /dev/null; then
-    # echo "aws binary should be installed"
-    # exit 1
-  # fi
+  if ! which aws > /dev/null; then
+    echo "aws binary should be installed"
+    exit 1
+  fi
 
-  # if ! which govc > /dev/null; then
-    # echo "govc binary should be installed"
-    # exit 1
-  # fi
+  if ! which govc > /dev/null; then
+    echo "govc binary should be installed"
+    exit 1
+  fi
 
-  # if ! which jq > /dev/null; then
-    # echo "jq binary should be installed"
-    # exit 1
-  # fi
+  if ! which jq > /dev/null; then
+    echo "jq binary should be installed"
+    exit 1
+  fi
+
+  if [[ -n "${VSPHERE_USER:-}" && -n "${VSPHERE_PASSWORD:-}" && -n "${VSPHERE_SERVER:-}" ]]; then
+    export GOVC_URL="https://${VSPHERE_USER}:${VSPHERE_PASSWORD}@${VSPHERE_SERVER}/sdk"
+    export GOVC_INSECURE=1
+  fi
+
+  if [[ -n "${AWS_REGION:-}" ]]; then
+    export AWS_DEFAULT_REGION="${AWS_REGION}"
+  fi
 
   opts=$(getopt \
     --longoptions "$(printf "%s:," "${ARGUMENT_LIST[@]}"),help" \
