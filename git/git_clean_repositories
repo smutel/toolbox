@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+  echo "Usage: git_clean_repositories <folder>"
+  exit 1
+}
+
+main() {
+  if [[ $# -ne 1 ]] || [[ ! -d $1 ]]; then
+    usage
+  fi
+
+  folder=$1
+  for i in ${folder}/*; do
+    if [[ -d $i && -d $i/.git ]]; then
+      echo ">> Cleaning $i..."
+      if git -C "$i" co master -q > /dev/null && git -C "$i" pull -q > /dev/null; then
+        git -C "$i" rp > /dev/null
+        branches="$(git -C "$i" branch | grep -v master | xargs || true)"
+        if [[ -n "${branches:-}" ]]; then
+          for b in ${branches}; do
+            echo ">>> Deleting branch ${b} ..."
+            git -C "$i" branch "$b" -D
+          done
+        fi
+      fi
+    fi
+  done
+}
+main "$@"
