@@ -15,6 +15,10 @@ if filereadable(expand("~/.vim/NERDCommenter.vim"))
   source ~/.vim/NERDCommenter.vim
 endif
 
+if filereadable(expand("~/.vim/YouCompleteMe.vim"))
+  source ~/.vim/YouCompleteMe.vim
+endif
+
 " Enable filetype plugin
 filetype on
 filetype plugin on
