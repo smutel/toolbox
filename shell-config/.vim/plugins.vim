@@ -14,5 +14,6 @@ Plugin 'valloric/youcompleteme'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'fatih/vim-go'
 
 call vundle#end()

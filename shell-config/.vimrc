@@ -77,3 +77,6 @@ let mapleader = ","
 " Tab navigation like Firefox.
 nnoremap <C-a> <Esc>:bprevious<CR>
 nnoremap <C-q> <Esc>:bnext<CR>
+
+:set colorcolumn=80
+set textwidth=80
