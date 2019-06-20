@@ -1,0 +1,26 @@
+before_script:
+  - if [[ -z "${RELEASE_TYPE}" ]]; then export RELEASE_TYPE="minor"; fi
+
+stages:
+  - release
+
+release:
+  stage: release
+  tags:
+    - smutel
+  script:
+    - if git describe --tags --exact-match > /dev/null 2>&1; then echo "Release is already associated to a tag. Skipping..."; exit 0; fi
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan git.xit.rxcorp.com >> ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - export PREVIOUS_VERSION_COUNT=$(git log --no-walk --tags --pretty="%h %d %s" --decorate=full | grep release | wc -l)
+    - export SSH_CI_REPOSITORY_URL=$(echo ${CI_REPOSITORY_URL} | sed "s/^[^@]*/git/g" | sed "s$/$:$")
+    - git remote set-url --push origin ${SSH_CI_REPOSITORY_URL}
+    - if [[ ${PREVIOUS_VERSION_COUNT} -eq 0 ]]; then standard-version --first-release; else standard-version -r ${RELEASE_TYPE}; fi
+    - git branch
+    - git log --all --decorate --oneline --graph
+    - git push --follow-tags origin HEAD:master
+    - kill ${SSH_AGENT_PID}
+  only:
+    - master
