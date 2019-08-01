@@ -15,7 +15,7 @@ fi
 
 eval $(grep "^ID=" /etc/os-release)
 if [[ "$ID" == "ubuntu" ]]; then
-  sudo apt install build-essential cmake python3-dev
+  sudo apt install build-essential cmake python3-dev python2.7-dev
 fi
 
 echo "Load bashrc external ..."

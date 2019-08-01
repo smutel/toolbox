@@ -19,6 +19,10 @@ if filereadable(expand("~/.vim/YouCompleteMe.vim"))
   source ~/.vim/YouCompleteMe.vim
 endif
 
+if filereadable(expand("~/.vim/gnupg.vim"))
+  source ~/.vim/gnupg.vim
+endif
+
 " Enable filetype plugin
 filetype on
 filetype plugin on
