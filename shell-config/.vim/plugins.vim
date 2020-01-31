@@ -15,5 +15,9 @@ Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'fatih/vim-go'
+Plugin 'jamessan/vim-gnupg'
+Plugin 'martinda/jenkinsfile-vim-syntax'
+Plugin 'glench/vim-jinja2-syntax'
+Plugin 'klen/python-mode'
 
 call vundle#end()
