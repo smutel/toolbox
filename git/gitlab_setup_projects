@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# https://github.com/NARKOZ/gitlab
+
+GITLAB_GROUPS="ansible-playbooks terraform-modules ansible-roles"
+
+for group in ${GITLAB_GROUPS}; do
+  projects=$(gitlab group_projects "${group}" --only=name --json | jq .result[].name | xargs)
+  for project in ${projects}; do
+    gitlab edit_project "${group}/${project}" "{suggestion_commit_message: 'git: Apply suggestion to %{file_path}',only_allow_merge_if_all_discussions_are_resolved: true,remove_source_branch_after_merge: true}"
+  done
+done
