@@ -61,7 +61,7 @@ vim -i NONE -c VundleUpdate -c quitall
 
 echo "Installing additional stuf for youcompleteme ..."
 cd ~/.vim/bundle/youcompleteme/
-./install.py --clang-completer > /dev/null
+./install.py --clang-completer --go-completer > /dev/null
 
 echo "Cleanup ..."
 rm -f ~/ssh.tar.gz
