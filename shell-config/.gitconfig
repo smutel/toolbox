@@ -1,17 +1,21 @@
 [pull]
   rebase = true
 [alias]
-  p = push -u
-  co = checkout
-  br = branch
+  br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
   ci = commit
-  st = status
-  lg = log --all --decorate --oneline --graph
-  lc = log --decorate --oneline origin/master..
-  last = !git lg -1
-  rlg = reflog
+  co = checkout
+  cob = checkout -b
+  del = branch -D
+  done = push origin HEAD
+  l = "!git log --decorate --pretty=format:\"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" \"$(git rev-parse --abbrev-ref origin/HEAD)\".."
   la = config --get-regexp alias
+  last = !git lg -1
+  lg = !git log --pretty=format:\"%C(magenta)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" --abbrev-commit -30
+  res = reset --hard
+  rlg = reflog
   rp = remote prune origin
+  s = status
+  undo = reset HEAD~1 --mixed
 [color]
   ui = auto
 [push]
