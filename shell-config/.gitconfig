@@ -3,6 +3,7 @@
 [alias]
   br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
   ci = commit
+  cm = commit --amend --no-edit
   co = checkout
   cob = checkout -b
   del = branch -D
