@@ -1,0 +1,59 @@
+IMAGE_NAME = "debian/bullseye64"
+MASTERS = 3
+NODES = 3
+
+Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+
+    (1..MASTERS).each do |i|
+        config.vm.define "k8s-master-#{i}" do |master|
+            master.vm.box = IMAGE_NAME
+            master.vm.network "private_network", ip: "192.168.56.#{i + 100}"
+            master.vm.hostname = "k8s-master-#{i}"
+            master.vm.boot_timeout = 600
+
+            # naming the virtualmachine
+            master.vm.provider :virtualbox do |vb|
+                vb.cpus = 1
+                vb.memory = 1664
+                vb.name = "k8s-master-#{i}"
+            end
+
+            master.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/tmp/id_rsa.pub"
+
+            # change ansible to ansible_local if you are running from windows,
+            # so that vagrant will install ansible inside VM and run ansible playbooks
+            # eg: master.vm.provision "ansible_local" do |ansible|
+            master.vm.provision "ansible_local" do |ansible|
+                ansible.compatibility_mode = "2.0"
+                ansible.playbook = "k8s-node-config.yml"
+            end
+        end
+    end
+
+    (1..NODES).each do |i|
+        config.vm.define "k8s-node-#{i}" do |node|
+            node.vm.box = IMAGE_NAME
+            node.vm.network "private_network", ip: "192.168.56.#{i + 110}"
+            node.vm.hostname = "k8s-node-#{i}"
+            node.vm.boot_timeout = 600
+
+            # naming the virtualmachine
+            node.vm.provider :virtualbox do |vb|
+                vb.cpus = 1
+                vb.memory = 1664
+                vb.name = "k8s-node-#{i}"
+            end
+
+            node.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/tmp/id_rsa.pub"
+
+            # change ansible to ansible_local if you are running from windows,
+            # so that vagrant will install ansible inside VM and run ansible playbooks
+            # eg: node.vm.provision "ansible_local" do |ansible|
+            node.vm.provision "ansible_local" do |ansible|
+                ansible.compatibility_mode = "2.0"
+                ansible.playbook = "k8s-node-config.yml"
+            end
+        end
+    end
+end
