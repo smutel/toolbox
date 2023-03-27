@@ -73,6 +73,17 @@ add_ssh_keys
 
 # Create some alias
 alias vi='vim'
+alias genpasswd='makepasswd --chars 20 --string=0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-+,_'
+alias forget='gpg-connect-agent reloadagent /bye'
+alias k='kubectl'
+complete -o default -F __start_kubectl k
+alias kcc="kubectl config get-contexts | grep '*'"
+alias kg='kubectl get'
+alias kga='kubectl get all --all-namespaces'
+alias kgp='kubectl get pods -o wide'
+alias kgs='kubectl get services'
+alias ksgp='kubectl get pods -n kube-system'
+alias kuc='kubectl config use-context'
 
 # Change shell prompt
 export PS1="\u@\h \[\033[32m\]\W\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "

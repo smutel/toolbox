@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-nginx
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: pod-nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: pod-nginx
+    spec:
+      containers:
+        - name: pod-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: "/usr/share/nginx/html"
+              name: volume-nginx
+      volumes:
+        - name: volume-nginx
+          persistentVolumeClaim:
+            claimName: pvc-nginx
