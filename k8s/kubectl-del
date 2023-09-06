@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -e
+
+PROGNAME="$(basename "$0")"
+readonly PROGNAME
+
+usage() {
+	echo "usage: $PROGNAME <name>"
+}
+
+configname=""
+
+if [ -z "$1" ]; then
+	usage
+	exit 1
+else
+  configname="$1"
+	shift
+fi
+
+set -u
+
+kubectl config delete-cluster "$configname"
+kubectl config delete-context "$configname"
+kubectl config delete-user "$configname"
