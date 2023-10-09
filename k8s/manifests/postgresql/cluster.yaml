@@ -1,0 +1,19 @@
+---
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: db-postgres
+spec:
+  teamId: db
+  volume:
+    size: 1Gi
+    storageClass: local
+  numberOfInstances: 3
+  users:
+    netbox:
+      - createdb
+    postgres:
+      - superuser
+      - createdb
+  postgresql:
+    version: "14"
