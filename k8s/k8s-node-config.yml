@@ -1,0 +1,74 @@
+---
+# cofigure kubernetes nodes with users and access
+
+- hosts: all
+  become: true
+  vars:
+    remote_user_name: provision
+    remote_user_public_key_file: '/tmp/id_rsa.pub'
+    remote_user_public_key: "{{lookup('file', remote_user_public_key_file )}}"
+  tasks:
+    - name: Create new user on managed node
+      ansible.builtin.user:
+        name: "{{ remote_user_name }}"
+        shell: "/bin/bash"
+
+    - name: Add sudo entries for new user
+      ansible.builtin.copy:
+        content: "{{ remote_user_name }} ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/{{ remote_user_name }}"
+
+    - name: Add key to managed node
+      ansible.builtin.authorized_key:
+        user: "{{ remote_user_name }}"
+        key: "{{ remote_user_public_key }}"
+        manage_dir: true
+
+    - name: Configure Hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Disable swap
+      ansible.builtin.shell: |
+        swapoff -a
+      changed_when: false
+
+    - name: Disable swap in fstab
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: Install some packages
+      ansible.builtin.apt:
+        pkg:
+          - needrestart
+          - vim
+        state: present
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Setup vim
+      ansible.builtin.copy:
+        content: |
+          set mouse=
+          set ttymouse=
+        dest: "/etc/vim/vimrc.local"
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        name: "*"
+        update_cache: true
+        state: latest
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Get result of needrestart
+      ansible.builtin.shell:
+        cmd: |
+          needrestart -b -r l -k | grep 'NEEDRESTART-KSTA:' | grep -Eo '[0-9]'
+      register: needrestart
+      changed_when: false
+
+    - name: Check if servers need to be restarted
+      ansible.builtin.debug:
+        msg: "This server needs to be reboot due to kernel update"
+      when: needrestart.stdout != "1"

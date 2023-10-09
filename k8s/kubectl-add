@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+PROGNAME="$(basename "$0")"
+readonly PROGNAME
+
+usage() {
+	echo "usage: $PROGNAME <config> <name>"
+}
+
+configfile=""
+configname=""
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+	usage
+	exit 1
+else
+	configfile="$1"
+  configname="$2"
+	shift
+fi
+
+set -u
+
+if [ ! -f "$configfile" ]; then
+  echo "$PROGNAME: file $1 does not exist"
+  usage
+  exit 2
+fi
+
+sed -i "s/name: .*/name: $configname/g" "$configfile"
+sed -i "s/cluster: .*/cluster: $configname/g" "$configfile"
+sed -i "s/user: .*/user: $configname/g" "$configfile"
+OLD_KUBECONFIG="${KUBECONFIG}"
+KUBECONFIG="${KUBECONFIG}:$configfile"
+if kubectl config view --flatten > /tmp/kubectl-add.tmp; then
+  mv /tmp/kubectl-add.tmp "${OLD_KUBECONFIG}"
+  chmod 640 "${OLD_KUBECONFIG}"
+else
+  echo "$PROGNAME: unable to add config file"
+  exit 3
+fi
