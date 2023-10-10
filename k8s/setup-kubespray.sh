@@ -33,6 +33,10 @@ if [ ! -d kubespray ]; then
   sed -i "s/^kube_network_plugin:.*/kube_network_plugin: flannel/g" inventory/vagrant/group_vars/k8s_cluster/k8s-cluster.yml
   sed -i "s/^\#\{0,1\}\s*flannel_interface:.*/flannel_interface: eth1/g" inventory/vagrant/group_vars/k8s_cluster/k8s-net-flannel.yml
 
+  # Kube-vip
+  echo "Setup kube proxy strict arp for kube-vip"
+  sed -i "s/^\#\{0,1\}\s*kube_proxy_strict_arp:.*/kube_proxy_strict_arp: true/g" inventory/vagrant/group_vars/k8s_cluster/k8s-cluster.yml
+
   # Metrics Server
   echo "Enable metrics server ..."
   sed -i "s/^\#\{0,1\}\s*metrics_server_enabled:.*/metrics_server_enabled: true/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
