@@ -7,7 +7,6 @@ spec:
   teamId: db
   volume:
     size: 1Gi
-    storageClass: local
   numberOfInstances: 3
   users:
     netbox:
