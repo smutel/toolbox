@@ -22,7 +22,7 @@ if [ ! -d kubespray ]; then
 
   # DNS
   echo "Setup DNS ..."
-  sed -i "s/^\#\{0,1\}\s*upstream_dns_servers:.*/upstream_dns_servers: ['10.0.2.3']/g" inventory/vagrant/group_vars/all/all.yml
+  sed -i "s/^\#\{0,1\}\s*upstream_dns_servers:.*/upstream_dns_servers: ['1.1.1.2']/g" inventory/vagrant/group_vars/all/all.yml
 
   # Read-only port for Kubelet
   echo "Enable read-only port ..."
