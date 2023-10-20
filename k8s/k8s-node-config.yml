@@ -63,6 +63,14 @@
         state: latest
       when: ansible_pkg_mgr == 'apt'
 
+    - name: Upgrade all packages with backports
+      ansible.builtin.apt:
+        default_release: "{{ ansible_distribution_release }}-backports"
+        name: "*"
+        update_cache: true
+        state: latest
+      when: ansible_pkg_mgr == 'apt'
+
     - name: Get result of needrestart
       ansible.builtin.shell:
         cmd: |
