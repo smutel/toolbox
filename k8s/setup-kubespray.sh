@@ -43,6 +43,16 @@ if [ ! -d kubespray ]; then
   sed -i "s/^m\#\{0,1\}\s*metrics_server_kubelet_insecure_tls:.*/metrics_server_kubelet_insecure_tls: true/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
   sed -i "s/^m\#\{0,1\}\s*metrics_server_kubelet_preferred_address_types:.*/metrics_server_kubelet_preferred_address_types: "InternalIP"/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
   sed -i "s/^m\#\{0,1\}\s*metrics_server_host_network:.*/metrics_server_host_network: true/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+
+  # Ingress nginx
+  echo "Enable ingress nginx ..."
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_enabled:.*/ingress_nginx_enabled: true/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_host_network:.*/ingress_nginx_host_network: true/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_nodeselector:.*/ingress_nginx_nodeselector:/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*kubernetes.io\/os:.*/kubernetes.io\/os: \"linux\"/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_namespace:.*/ingress_nginx_namespace: ingress-nginx/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_insecure_port:.*/ingress_nginx_insecure_port: 80/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
+  sed -i "s/^\#\{0,1\}\s*ingress_nginx_secure_port:.*/ingress_nginx_secure_port: 443/g" inventory/vagrant/group_vars/k8s_cluster/addons.yml
 else
   echo "Folder kubespray already exists. Nothing to do."
   exit 0
