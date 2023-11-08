@@ -174,34 +174,42 @@ cert_manager_enabled: false
 #   - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
 # MetalLB deployment
-metallb_enabled: false
+metallb_enabled: true
 metallb_speaker_enabled: "{{ metallb_enabled }}"
-# metallb_speaker_nodeselector:
-#   kubernetes.io/os: "linux"
-# metallb_controller_nodeselector:
-#   kubernetes.io/os: "linux"
-# metallb_speaker_tolerations:
-#   - key: "node-role.kubernetes.io/master"
-#     operator: "Equal"
-#     value: ""
-#     effect: "NoSchedule"
-#   - key: "node-role.kubernetes.io/control-plane"
-#     operator: "Equal"
-#     value: ""
-#     effect: "NoSchedule"
-# metallb_controller_tolerations:
-#   - key: "node-role.kubernetes.io/master"
-#     operator: "Equal"
-#     value: ""
-#     effect: "NoSchedule"
-#   - key: "node-role.kubernetes.io/control-plane"
-#     operator: "Equal"
-#     value: ""
-#     effect: "NoSchedule"
-# metallb_version: v0.13.9
-# metallb_protocol: "layer2"
-# metallb_port: "7472"
-# metallb_memberlist_port: "7946"
+metallb_speaker_nodeselector:
+  kubernetes.io/os: "linux"
+metallb_controller_nodeselector:
+  kubernetes.io/os: "linux"
+metallb_speaker_tolerations:
+  - key: "node-role.kubernetes.io/master"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+metallb_controller_tolerations:
+  - key: "node-role.kubernetes.io/master"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Equal"
+    value: ""
+    effect: "NoSchedule"
+metallb_version: v0.13.9
+metallb_protocol: "layer2"
+metallb_port: "7472"
+metallb_memberlist_port: "7946"
+metallb_config:
+  address_pools:
+    primary:
+      ip_range:
+        - 192.168.56.130-192.168.56.139
+      auto_assign: true
+  layer2:
+    - primary
 # metallb_config:
 #   address_pools:
 #     primary:
