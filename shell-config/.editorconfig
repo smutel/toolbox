@@ -10,6 +10,9 @@ insert_final_newline = true
 [{*.md,*.asciidoc}]
 trim_trailing_whitespace = false
 
+[*.json]
+trim_trailing_whitespace = false
+
 [{Makefile,**.mk,makefile}]
 # Use tabs for indentation (Makefiles require tabs)
 indent_style = tab
