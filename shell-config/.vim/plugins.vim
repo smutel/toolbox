@@ -4,6 +4,7 @@ call vundle#begin()
 
 Plugin 'GutenYe/json5.vim'
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'airblade/vim-localorie'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'dense-analysis/ale'
 Plugin 'editorconfig/editorconfig-vim'

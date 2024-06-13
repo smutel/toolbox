@@ -1,6 +1,6 @@
 " Load plugins configuration
 if filereadable(expand("~/.vim/plugins.vim"))
-  source ~/.vim/plugins.vim
+ source ~/.vim/plugins.vim
 endif
 
 if filereadable(expand("~/.vim/vim-airline.vim"))
@@ -20,7 +20,19 @@ if filereadable(expand("~/.vim/YouCompleteMe.vim"))
 endif
 
 if filereadable(expand("~/.vim/gnupg.vim"))
-  source ~/.vim/gnupg.vim
+ source ~/.vim/gnupg.vim
+endif
+
+if filereadable(expand("~/.vim/PythonMode.vim"))
+  source ~/.vim/PythonMode.vim
+endif
+
+if filereadable(expand("~/.vim/ale.vim"))
+  source ~/.vim/ale.vim
+endif
+
+if filereadable(expand("~/.vim/localorie.vim"))
+  source ~/.vim/localorie.vim
 endif
 
 " Enable filetype plugin
@@ -74,6 +86,7 @@ set cindent
 
 " Shortcut to save and quit buffer
 nnoremap qq :w\|bd<cr>
+nnoremap qa :bd<cr>
 
 " Remap leader key
 let mapleader = ","
@@ -82,5 +95,10 @@ let mapleader = ","
 nnoremap <C-a> <Esc>:bprevious<CR>
 nnoremap <C-q> <Esc>:bnext<CR>
 
-set colorcolumn=80
+" Column limit
+set colorcolumn=100
 set textwidth=80
+
+" Spell check
+set spell
+set spelllang=fr
