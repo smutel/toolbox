@@ -96,8 +96,7 @@ nnoremap <C-a> <Esc>:bprevious<CR>
 nnoremap <C-q> <Esc>:bnext<CR>
 
 " Column limit
-set colorcolumn=100
-set textwidth=80
+set colorcolumn=80
 
 " Spell check
 set spell
