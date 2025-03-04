@@ -19,7 +19,21 @@ fi
 eval "$(grep "^ID=" /etc/os-release)"
 if [[ "$ID" == "ubuntu" ]]; then
   echo "Install some packages ..."
+
+  # Docker repository
+  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    -o /etc/apt/keyrings/docker.asc
+  sudo chmod a+r /etc/apt/keyrings/docker.asc
+  echo "deb [arch=$(dpkg --print-architecture) \
+    signed-by=/etc/apt/keyrings/docker.asc] \
+    https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") \
+    stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+  # Keepassrc repository
   sudo add-apt-repository -y ppa:phoerious/keepassxc > /dev/null
+
+  # Granted repository
   wget -q -O- https://apt.releases.commonfate.io/gpg | sudo gpg --batch --yes \
     --dearmor -o /usr/share/keyrings/common-fate-linux.gpg
   echo "deb [arch=$(dpkg --print-architecture) \
@@ -32,7 +46,10 @@ if [[ "$ID" == "ubuntu" ]]; then
     tmux git keepassxc gnome-tweaks gnome-shell-extensions libfuse2 \
     gnome-shell-extension-manager gimp ttf-mscorefonts-installer \
     filezilla meld audacity shellcheck jq imagemagick build-essential \
-    makepasswd direnv granted curl cmake > /dev/null 2>&1
+    makepasswd direnv granted curl cmake docker-ce docker-ce-cli \
+    containerd.io docker-buildx-plugin docker-compose-plugin> /dev/null 2>&1
+
+  sudo usermod -a -G docker samuel
 fi
 
 echo "Load bashrc external ..."
