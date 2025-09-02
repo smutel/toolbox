@@ -71,8 +71,8 @@ fi
 add_ssh_keys
 
 # Create some alias
-if which vim > /dev/null; then
-  alias vi='vim'
+if which nvim > /dev/null; then
+  alias vi='nvim'
 fi
 
 if which makepasswd > /dev/null; then
@@ -121,23 +121,9 @@ export TERM=xterm-256color
 export JAVA_PATH=/opt/jdk
 export PATH="${JAVA_PATH}/bin:${JAVA_PATH}/jre/bin:$PATH"
 
-# Add go to env variables
-export GO_PATH=/opt/go
-export PATH="${GO_PATH}/bin:$PATH"
-
-# Add ~/bin directory
-export PATH="$HOME/bin:$PATH"
-
 # Export tty for GPG
 GPG_TTY=$(tty)
 export GPG_TTY
 
 # Disable the XON/XOFF feature
 stty -ixon
-
-# Start tmux
-if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
-  if [[ "$(pidof tmux)" == "" ]]; then
-    exec tmux
-  fi
-fi
